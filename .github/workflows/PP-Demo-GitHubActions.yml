@@ -1,40 +1,78 @@
-jobs:
-  build:
+name: export-and-branch-solution
+# Export solution from DEV environment
+#  unpack it and prepare, commit and push a git branch with the changes
 
-    runs-on: windows-latest   # alternate runner OS is: ubuntu-latest
+on:
+  workflow_dispatch:
+    inputs:
+      # Change this value
+      solution_name:
+        description: 'name of the solution to worked on from Power Platform'
+        required: true
+        default: ALMLab
+       #Do Not change these values
+      solution_exported_folder:
+        description: 'folder name for staging the exported solution *do not change*'
+        required: true
+        default: out/exported/
+      solution_folder:
+        description: 'staging the unpacked solution folder before check-in *do not change*'
+        required: true
+        default: out/solutions/
+      solution_target_folder: 
+       description: 'folder name to be created and checked in *do not change*'
+       required: true
+       default: solutions/
+env:
+#edit your values here
+  ENVIRONMENT_URL: 'https://operations-gescopilottest.crm.dynamics.com/'
+  CLIENT_ID: '28d5cf8b-f963-4608-b9fd-319d804fe62a'
+  TENANT_ID: '13588042-fe43-45bb-8ce1-83b2e6dd126c'
+permissions:
+  contents: write
+jobs:
+  export-from-dev:
+    runs-on: windows-latest
+    # or you can say runs-on: ubuntu-latest
+    env:
+      RUNNER_DEBUG: 1
 
     steps:
-    - name: Install Power Platform Tools
-      uses: microsoft/powerplatform-actions/actions-install@v1
-
-    - name: Export Solution
-      uses: microsoft/powerplatform-actions/export-solution@v1
+    - uses: actions/checkout@v2
       with:
-        environment-url: 'https://operations-gescopilottest.crm.dynamics.com'
-        user-name: 'navya.s.shivanadhuni@avanaded365.onmicrosoft.com'
-        password-secret: ${{ secrets.PASSWORD }}
-        solution-name: GitHubActionsDevOps
-        solution-output-file: 'GitHubActionsDevOps.zip'
-        working-directory: 'out'
+        lfs: true
 
-    - name: Unpack Solution
-      uses: microsoft/powerplatform-actions/unpack-solution@v1
+    - name: who-am-i action
+      uses: microsoft/powerplatform-actions/who-am-i@v0
       with:
-        solution-file: 'out/aSolution1.zip'
-        solution-folder: 'out/solutions/solution one'
+        environment-url: ${{env.ENVIRONMENT_URL}}
+        app-id: ${{env.CLIENT_ID}}
+        client-secret: ${{ secrets.PowerPlatformSPN }}
+        tenant-id: ${{env.TENANT_ID}}
+
+
+    - name: export-solution action
+      uses: microsoft/powerplatform-actions/export-solution@v0
+      with:
+        environment-url: ${{env.ENVIRONMENT_URL}}
+        app-id: ${{env.CLIENT_ID}}
+        client-secret: ${{ secrets.PowerPlatformSPN }}
+        tenant-id: ${{env.TENANT_ID}}
+        solution-name: ${{ github.event.inputs.solution_name }}
+        solution-output-file: ${{ github.event.inputs.solution_exported_folder}}/${{ github.event.inputs.solution_name }}.zip
+
+    - name: unpack-solution action
+      uses: microsoft/powerplatform-actions/unpack-solution@v0
+      with:
+        solution-file: ${{ github.event.inputs.solution_exported_folder}}/${{ github.event.inputs.solution_name }}.zip
+        solution-folder: ${{ github.event.inputs.solution_folder}}/${{ github.event.inputs.solution_name }}
         solution-type: 'Unmanaged'
         overwrite-files: true
 
-    - name: Publish Solution
-      uses: microsoft/powerplatform-actions/publish-solution@v1
+    - name: branch-solution, prepare it for a PullRequest
+      uses: microsoft/powerplatform-actions/branch-solution@v0
       with:
-        environment-url: 'https://operations-gescopilottest.crm.dynamics.com'
-        user-name: 'navya.s.shivanadhuni@avanaded365.onmicrosoft.com'
-        password-secret: ${{ secrets.PASSWORD }}
-
-    - name: Prepare solution changes for check-in into source control
-      uses: microsoft/powerplatform-actions/branch-solution@v1
-      with:
-        solution-folder: 'out/solutions/solution one'
-        solution-target-folder: 'src/solutions/solution1'
-        token: ${{ secrets.PP_TOKEN }}
+        solution-folder: ${{ github.event.inputs.solution_folder}}/${{ github.event.inputs.solution_name }}
+        solution-target-folder: ${{ github.event.inputs.solution_target_folder}}/${{ github.event.inputs.solution_name }}
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        allow-empty-commit: true
