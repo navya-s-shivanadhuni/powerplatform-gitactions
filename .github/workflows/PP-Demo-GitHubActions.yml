@@ -10,11 +10,11 @@ jobs:
     - name: Export Solution
       uses: microsoft/powerplatform-actions/export-solution@v1
       with:
-        environment-url: 'https://myenv.crm.dynamics.com'
-        user-name: 'me@myenv.onmicrosoft.com'
+        environment-url: 'https://operations-gescopilottest.crm.dynamics.com'
+        user-name: 'navya.s.shivanadhuni@avanaded365.onmicrosoft.com'
         password-secret: ${{ secrets.PASSWORD }}
-        solution-name: aSolution
-        solution-output-file: 'aSolution.zip'
+        solution-name: GitHubActionsDevOps
+        solution-output-file: 'GitHubActionsDevOps.zip'
         working-directory: 'out'
 
     - name: Unpack Solution
@@ -28,8 +28,8 @@ jobs:
     - name: Publish Solution
       uses: microsoft/powerplatform-actions/publish-solution@v1
       with:
-        environment-url: 'https://myenv.crm.dynamics.com'
-        user-name: 'me@myenv.onmicrosoft.com'
+        environment-url: 'https://operations-gescopilottest.crm.dynamics.com'
+        user-name: 'navya.s.shivanadhuni@avanaded365.onmicrosoft.com'
         password-secret: ${{ secrets.PASSWORD }}
 
     - name: Prepare solution changes for check-in into source control
